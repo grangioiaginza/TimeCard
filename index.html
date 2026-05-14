@@ -9,7 +9,7 @@
         body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; }
         .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        .reg-btn { position: fixed; top: 15px; left: 15px; background: transparent; border: 1px solid #444; color: #888; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; z-index: 100; }
+        .reg-btn { position: fixed; top: 15px; left: 15px; background: transparent; border: 1px solid #444; color: #888; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; z-index: 100; transition: 0.3s; }
         .reg-btn:hover { border-color: #f1d592; color: #f1d592; background: rgba(241, 213, 146, 0.05); }
 
         #reg-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; padding: 20px 0; }
@@ -18,11 +18,9 @@
         h2 { letter-spacing: 0.2em; margin-bottom: 20px; line-height: 1.5; }
         h3 { color: #f1d592; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; text-align: center; }
         
-        /* 注意事項の大型化 */
         .desc-box { background: rgba(241, 213, 146, 0.1); border: 1px solid #f1d592; padding: 15px; margin: 15px 0; border-radius: 8px; }
         .desc-highlight { color: #f1d592; font-weight: bold; font-size: 16px; line-height: 1.6; display: block; }
-        .desc-sub { font-size: 11px; color:#ccc; margin-top: 10px; display: block; }
-
+        
         label { font-size: 11px; color: #f1d592; margin-top: 12px; display: block; letter-spacing: 0.05em; }
         input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #444; background: #333; color: #fff; font-size: 16px; outline: none; }
         input:focus, select:focus { border-color: #f1d592; }
@@ -40,7 +38,7 @@
         .flex { display: flex; gap: 10px; }
         .flex div { flex: 1; }
 
-        #punch-elements, #warning-panel { display: none; }
+        #punch-elements, #error-panel, #warning-panel { display: none; }
         #warning-panel { color: #ff4d4d; border: 1px dashed #ff4d4d; padding: 20px; border-radius: 10px; font-size: 14px; line-height: 1.6; margin-top: 10px; }
         #status { margin-top: 20px; font-size: 13px; color: #888; min-height: 3em; line-height: 1.6; }
         .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; font-family: monospace; line-height: 1.4; z-index: 100; pointer-events: none; }
@@ -80,7 +78,6 @@
                 <div><label>姓</label><input type="text" id="lastName" placeholder="田中"></div>
                 <div><label>名</label><input type="text" id="firstName" placeholder="太郎"></div>
             </div>
-            
             <div class="flex">
                 <div><label>姓（カナ）</label><input type="text" id="lastNameKana" placeholder="タナカ"></div>
                 <div><label>名（カナ）</label><input type="text" id="firstNameKana" placeholder="タロウ"></div>
@@ -101,22 +98,6 @@
                 <div><label>交通費（往復IC）</label><input type="number" id="ic_fare" placeholder="400"></div>
                 <div><label>交通費（定期代）</label><input type="number" id="pass_fare" placeholder="5000"></div>
             </div>
-            
-            <hr style="border:0; border-top:1px solid #444; margin:25px 0;">
-            <h4 style="color:#f1d592; margin-bottom:10px;">給与振込先</h4>
-            <label>銀行名</label><input type="text" id="bankName" placeholder="〇〇銀行">
-            <label>支店名</label><input type="text" id="bankBranch" placeholder="〇〇支店">
-            <div class="flex">
-                <div>
-                    <label>口座種別</label>
-                    <select id="bankType">
-                        <option value="普通">普通</option>
-                        <option value="当座">当座</option>
-                    </select>
-                </div>
-                <div><label>口座番号</label><input type="text" id="bankNumber" placeholder="1234567"></div>
-            </div>
-            <label>口座名義（カナ）</label><input type="text" id="bankHolder" placeholder="タナカ タロウ">
 
             <label>緊急連絡先（氏名）</label><input type="text" id="em_name">
             <label>緊急連絡先（ヨミ）</label><input type="text" id="em_yomi">
@@ -124,11 +105,24 @@
             <label>関係性</label><input type="text" id="em_rel" placeholder="配偶者">
             
             <hr style="border:0; border-top:1px solid #444; margin:25px 0;">
+            
             <label>マイナンバー（12桁）</label>
             <input type="text" id="mynumber" class="mask-input" maxlength="12" placeholder="数字12桁を入力" autocomplete="off" inputmode="numeric">
 
-            <div class="desc-box" style="background:none;">
-                <span class="desc-sub" style="color:#f1d592; font-weight:bold;">
+            <h4 style="color:#f1d592; margin:20px 0 10px;">給与振込先</h4>
+            <label>銀行名</label><input type="text" id="bankName" placeholder="〇〇銀行">
+            <label>支店名</label><input type="text" id="bankBranch" placeholder="〇〇支店">
+            <div class="flex">
+                <div>
+                    <label>口座種別</label>
+                    <select id="bankType"><option value="普通">普通</option><option value="当座">当座</option></select>
+                </div>
+                <div><label>口座番号</label><input type="text" id="bankNumber" placeholder="1234567"></div>
+            </div>
+            <label>口座名義（カナ）</label><input type="text" id="bankHolder" placeholder="タナカ タロウ">
+
+            <div class="desc-box">
+                <span class="desc-highlight">
                     お手持ちの端末から運転免許証・マイナンバーカードの画像を提出いただきます。<br>
                     照明の反射などで認識できない画像にならないようご注意ください。
                 </span>
@@ -165,7 +159,7 @@
         </div>
     </div>
 
-    <div class="build-info">GITHUB: v1.2.2<br>GAS: <span id="gas-build">---</span></div>
+    <div class="build-info">GITHUB: v1.2.3<br>GAS: <span id="gas-build">---</span></div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyzOY0K5lid7GwgAhhHoK_BVWAwvJeFjS40nNUZ6TMPlyuPJF2NkvAlQhKS1w3bJvhT/exec";
@@ -240,16 +234,14 @@
                 mynumber: document.getElementById('mynumber').value.trim(),
                 images: imageDB
             };
-
-            // カナ姓名の結合処理
             data.yomiFullName = data.lastNameKana + " " + data.firstNameKana;
 
-            if(!data.lastName || !data.firstName || !data.lastNameKana || !data.firstNameKana || !data.tel || data.mynumber.length !== 12) { 
+            if(!data.lastName || !data.firstName || !data.lastNameKana || !data.firstNameKana || !data.tel || data.mynumber.length !== 12 || !data.bankName || !data.bankNumber) { 
                 alert("必須項目に入力不備があるか、マイナンバーが12桁ではありません。"); return; 
             }
             if(!confirm(data.lastName + " " + data.firstName + " さんを登録しますか？")) return;
 
-            btn.disabled = true; btn.innerText = "登録中（数秒かかります）...";
+            btn.disabled = true; btn.innerText = "送信中（画像がある場合は数秒かかります）...";
             fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) })
             .then(res => res.json()).then(res => {
                 if(res.success) { alert("完了しました。"); location.reload(); }
@@ -275,8 +267,7 @@
             for(let i=1; i<=31; i++) d.add(new Option(i+"日", i)); d.value="15";
         }
         function checkUserStatus() {
-            const n = document.getElementById('nameList').value;
-            if(!n) return;
+            const n = document.getElementById('nameList').value; if(!n) return;
             fetch(GAS_URL + "?ip=" + userIp + "&name=" + encodeURIComponent(n)).then(r => r.json()).then(r => {
                 const s = document.getElementById('status');
                 if(r.lastRecord) s.innerHTML = "前回: " + (r.lastRecord.in || "--") + " 〜 " + (r.lastRecord.out || "--");
