@@ -18,14 +18,12 @@
         h2 { letter-spacing: 0.2em; margin-bottom: 20px; line-height: 1.5; }
         h3 { color: #f1d592; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; text-align: center; }
         
-        .desc-text { font-size: 11px; color:#ccc; line-height:1.6; margin: 15px 0; }
-        .desc-highlight { color: #f1d592; font-weight: bold; }
-        
-        label { font-size: 11px; color: #f1d592; margin-top: 12px; display: block; letter-spacing: 0.05em; }
-        .label-note { font-size: 9px; color: #ff4d4d; margin-left: 5px; font-weight: normal; }
-        .req-mark { color: #ff4d4d; font-size: 10px; margin-left: 4px; font-weight: bold; }
-        .opt-mark { color: #777; font-size: 10px; margin-left: 4px; }
+        /* 注意事項の大型化 */
+        .desc-box { background: rgba(241, 213, 146, 0.1); border: 1px solid #f1d592; padding: 15px; margin: 15px 0; border-radius: 8px; }
+        .desc-highlight { color: #f1d592; font-weight: bold; font-size: 16px; line-height: 1.6; display: block; }
+        .desc-sub { font-size: 11px; color:#ccc; margin-top: 10px; display: block; }
 
+        label { font-size: 11px; color: #f1d592; margin-top: 12px; display: block; letter-spacing: 0.05em; }
         input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #444; background: #333; color: #fff; font-size: 16px; outline: none; }
         input:focus, select:focus { border-color: #f1d592; }
 
@@ -42,7 +40,7 @@
         .flex { display: flex; gap: 10px; }
         .flex div { flex: 1; }
 
-        #punch-elements, #error-panel, #warning-panel { display: none; }
+        #punch-elements, #warning-panel { display: none; }
         #warning-panel { color: #ff4d4d; border: 1px dashed #ff4d4d; padding: 20px; border-radius: 10px; font-size: 14px; line-height: 1.6; margin-top: 10px; }
         #status { margin-top: 20px; font-size: 13px; color: #888; min-height: 3em; line-height: 1.6; }
         .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; font-family: monospace; line-height: 1.4; z-index: 100; pointer-events: none; }
@@ -70,58 +68,92 @@
     <div id="reg-modal">
         <div class="modal-content">
             <h3>スタッフ新規登録</h3>
-            <hr style="border:0; border-top:1px solid #444;">
-            <p class="desc-text desc-highlight">最寄り駅からの交通費（往復IC）をお調べください。マイナンバーカードをご用意の上、下記の入力を開始してください。</p>
+            
+            <div class="desc-box">
+                <span class="desc-highlight">
+                    最寄り駅からの交通費（往復IC）をお調べください。<br>
+                    マイナンバーカード・免許証をご用意の上、下記の入力を開始してください。
+                </span>
+            </div>
             
             <div class="flex">
-                <div><label>姓<span class="req-mark">(必須)</span></label><input type="text" id="lastName" placeholder="田中"></div>
-                <div><label>名<span class="req-mark">(必須)</span></label><input type="text" id="firstName" placeholder="太郎"></div>
+                <div><label>姓</label><input type="text" id="lastName" placeholder="田中"></div>
+                <div><label>名</label><input type="text" id="firstName" placeholder="太郎"></div>
             </div>
-            <label>ヨミ（カタカナ）<span class="req-mark">(必須)</span></label><input type="text" id="yomi" placeholder="タナカ タロウ">
-            <label>郵便番号<span class="req-mark">(必須)</span></label><input type="text" id="zipcode" placeholder="1234567">
-            <label>住所<span class="req-mark">(必須)</span></label><input type="text" id="address" placeholder="東京都中央区銀座...">
-            <label>電話番号<span class="req-mark">(必須)</span></label><input type="tel" id="tel" placeholder="09012345678">
-            <label>E-mail<span class="req-mark">(必須)</span></label><input type="email" id="email" placeholder="example@gioia.page">
-            <label>生年月日<span class="req-mark">(必須)</span></label>
+            
+            <div class="flex">
+                <div><label>姓（カナ）</label><input type="text" id="lastNameKana" placeholder="タナカ"></div>
+                <div><label>名（カナ）</label><input type="text" id="firstNameKana" placeholder="タロウ"></div>
+            </div>
+
+            <label>郵便番号</label><input type="text" id="zipcode" placeholder="1234567">
+            <label>住所</label><input type="text" id="address" placeholder="東京都中央区銀座...">
+            <label>電話番号</label><input type="tel" id="tel" placeholder="09012345678">
+            <label>E-mail</label><input type="email" id="email" placeholder="example@gioia.page">
+            <label>生年月日</label>
             <div class="flex">
                 <div><select id="birthYear"></select></div>
                 <div><select id="birthMonth"></select></div>
                 <div><select id="birthDay"></select></div>
             </div>
-            <label>自宅からの最寄り駅<span class="req-mark">(必須)</span></label><input type="text" id="station" placeholder="銀座駅">
+            <label>自宅からの最寄り駅</label><input type="text" id="station" placeholder="銀座駅">
             <div class="flex">
-                <div><label>交通費（往復IC）<span class="opt-mark">(任意)</span></label><input type="number" id="ic_fare" placeholder="400"></div>
-                <div><label>交通費（定期代）<span class="opt-mark">(任意)</span></label><input type="number" id="pass_fare" placeholder="5000"></div>
+                <div><label>交通費（往復IC）</label><input type="number" id="ic_fare" placeholder="400"></div>
+                <div><label>交通費（定期代）</label><input type="number" id="pass_fare" placeholder="5000"></div>
             </div>
-            <label>緊急連絡先（氏名）<span class="req-mark">(必須)</span></label><input type="text" id="em_name">
-            <label>緊急連絡先（ヨミ）<span class="req-mark">(必須)</span></label><input type="text" id="em_yomi">
-            <label>緊急連絡先（電話）<span class="req-mark">(必須)</span></label><input type="tel" id="em_tel">
-            <label>関係性<span class="req-mark">(必須)</span></label><input type="text" id="em_rel" placeholder="配偶者">
             
-            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
-            <label>マイナンバー（12桁）<span class="req-mark">(必須)</span></label>
+            <hr style="border:0; border-top:1px solid #444; margin:25px 0;">
+            <h4 style="color:#f1d592; margin-bottom:10px;">給与振込先</h4>
+            <label>銀行名</label><input type="text" id="bankName" placeholder="〇〇銀行">
+            <label>支店名</label><input type="text" id="bankBranch" placeholder="〇〇支店">
+            <div class="flex">
+                <div>
+                    <label>口座種別</label>
+                    <select id="bankType">
+                        <option value="普通">普通</option>
+                        <option value="当座">当座</option>
+                    </select>
+                </div>
+                <div><label>口座番号</label><input type="text" id="bankNumber" placeholder="1234567"></div>
+            </div>
+            <label>口座名義（カナ）</label><input type="text" id="bankHolder" placeholder="タナカ タロウ">
+
+            <label>緊急連絡先（氏名）</label><input type="text" id="em_name">
+            <label>緊急連絡先（ヨミ）</label><input type="text" id="em_yomi">
+            <label>緊急連絡先（電話）</label><input type="tel" id="em_tel">
+            <label>関係性</label><input type="text" id="em_rel" placeholder="配偶者">
+            
+            <hr style="border:0; border-top:1px solid #444; margin:25px 0;">
+            <label>マイナンバー（12桁）</label>
             <input type="text" id="mynumber" class="mask-input" maxlength="12" placeholder="数字12桁を入力" autocomplete="off" inputmode="numeric">
 
-            <label>マイナンバーカード (表面)<span class="opt-mark">(任意)</span></label>
+            <div class="desc-box" style="background:none;">
+                <span class="desc-sub" style="color:#f1d592; font-weight:bold;">
+                    お手持ちの端末から運転免許証・マイナンバーカードの画像を提出いただきます。<br>
+                    照明の反射などで認識できない画像にならないようご注意ください。
+                </span>
+            </div>
+
+            <label>マイナンバーカード (表面)</label>
             <div class="upload-area">
                 <input type="file" id="file_mynumberF" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_mynumberF')">
                 <span>カメラを起動して撮影</span>
                 <img id="prev_mynumberF" class="preview-img">
             </div>
-            <label>マイナンバーカード (裏面)<span class="opt-mark">(任意)</span></label>
+            <label>マイナンバーカード (裏面)</label>
             <div class="upload-area">
                 <input type="file" id="file_mynumberB" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_mynumberB')">
                 <span>カメラを起動して撮影</span>
                 <img id="prev_mynumberB" class="preview-img">
             </div>
 
-            <label>免許証 (表面)<span class="opt-mark">(任意)</span></label>
+            <label>免許証 (表面)</label>
             <div class="upload-area">
                 <input type="file" id="file_licenseF" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_licenseF')">
                 <span>カメラを起動して撮影</span>
                 <img id="prev_licenseF" class="preview-img">
             </div>
-            <label>免許証 (裏面)<span class="opt-mark">(任意)</span></label>
+            <label>免許証 (裏面)</label>
             <div class="upload-area">
                 <input type="file" id="file_licenseB" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_licenseB')">
                 <span>カメラを起動して撮影</span>
@@ -133,7 +165,7 @@
         </div>
     </div>
 
-    <div class="build-info">GITHUB: v1.2.1<br>GAS: <span id="gas-build">---</span></div>
+    <div class="build-info">GITHUB: v1.2.2<br>GAS: <span id="gas-build">---</span></div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyzOY0K5lid7GwgAhhHoK_BVWAwvJeFjS40nNUZ6TMPlyuPJF2NkvAlQhKS1w3bJvhT/exec";
@@ -186,7 +218,8 @@
                 action: 'registerStaff',
                 lastName: document.getElementById('lastName').value.trim(),
                 firstName: document.getElementById('firstName').value.trim(),
-                yomi: document.getElementById('yomi').value.trim(),
+                lastNameKana: document.getElementById('lastNameKana').value.trim(),
+                firstNameKana: document.getElementById('firstNameKana').value.trim(),
                 zipcode: document.getElementById('zipcode').value.trim(),
                 address: document.getElementById('address').value.trim(),
                 tel: document.getElementById('tel').value.trim(),
@@ -195,6 +228,11 @@
                 station: document.getElementById('station').value.trim(),
                 ic_fare: document.getElementById('ic_fare').value,
                 pass_fare: document.getElementById('pass_fare').value,
+                bankName: document.getElementById('bankName').value.trim(),
+                bankBranch: document.getElementById('bankBranch').value.trim(),
+                bankType: document.getElementById('bankType').value,
+                bankNumber: document.getElementById('bankNumber').value.trim(),
+                bankHolder: document.getElementById('bankHolder').value.trim(),
                 em_name: document.getElementById('em_name').value.trim(),
                 em_yomi: document.getElementById('em_yomi').value.trim(),
                 em_tel: document.getElementById('em_tel').value.trim(),
@@ -203,7 +241,12 @@
                 images: imageDB
             };
 
-            if(!data.lastName || !data.firstName || !data.yomi || !data.tel || data.mynumber.length !== 12) { alert("必須項目に入力不備があるか、マイナンバーが12桁ではありません。"); return; }
+            // カナ姓名の結合処理
+            data.yomiFullName = data.lastNameKana + " " + data.firstNameKana;
+
+            if(!data.lastName || !data.firstName || !data.lastNameKana || !data.firstNameKana || !data.tel || data.mynumber.length !== 12) { 
+                alert("必須項目に入力不備があるか、マイナンバーが12桁ではありません。"); return; 
+            }
             if(!confirm(data.lastName + " " + data.firstName + " さんを登録しますか？")) return;
 
             btn.disabled = true; btn.innerText = "登録中（数秒かかります）...";
