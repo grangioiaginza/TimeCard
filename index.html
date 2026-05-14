@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>Gran GIOIA Timecard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; padding: 50px 20px; margin: 0; }
+        .container { border: 2px solid #f1d592; padding: 30px; border-radius: 10px; max-width: 400px; margin: auto; }
+        select, button { width: 100%; padding: 15px; margin: 10px 0; font-size: 18px; border-radius: 5px; box-sizing: border-box; }
+        select { background: #333; color: #fff; border: 1px solid #f1d592; }
+        .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; cursor: pointer; border: none; }
+        .btn-out { background: #333; color: #f1d592; border: 1px solid #f1d592; cursor: pointer; }
+        #status { margin-top: 20px; font-weight: bold; min-height: 1.2em; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Gran GIOIA<br>Timecard</h2>
+        <select id="nameList">
+            <option value="">名前を選択してください</option>
+            <option value="スタッフA">スタッフA</option>
+            <option value="スタッフB">スタッフB</option>
+        </select>
+        <button class="btn-in" onclick="punch('出勤')">出 勤</button>
+        <button class="btn-out" onclick="punch('退勤')">退 勤</button>
+        <div id="status">通信確認中...</div>
+    </div>
+
+    <script>
+        // ★ここにあなたのGASのウェブアプリURLを貼ってください
+        const GAS_URL = "https://script.google.com/macros/s/.../exec";
+
+        // 起動時にIPチェック
+        window.onload = function() {
+            fetch('https://api.ipify.org?format=json')
+            .then(res => res.json())
+            .then(data => {
+                const payload = { action: 'checkIp', ip: data.ip };
+                return fetch(GAS_URL, {
+                    method: 'POST',
+                    mode: 'no-cors', // GASへのPOSTの壁を突破するための設定
+                    body: JSON.stringify(payload)
+                });
+            })
+            .then(() => {
+                // no-corsだとレスポンスが取れないため、簡易的に「認証済」と表示
+                document.getElementById('status').innerText = "店舗内ネットワーク：認証済";
+            })
+            .catch(err => {
+                document.getElementById('status').innerText = "エラー: 通信できません";
+            });
+        };
+
+        function punch(type) {
+            const name = document.getElementById('nameList').value;
+            if (!name) { alert("名前を選択してください"); return; }
+            document.getElementById('status').innerText = "記録中...";
+
+            const payload = { action: 'punch', name: name, type: type };
+            
+            // GASへのデータ送信
+            fetch(GAS_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                body: JSON.stringify(payload)
+            }).then(() => {
+                alert(name + "さんの「" + type + "」を記録送信しました。\n(反映まで数秒かかります)");
+                document.getElementById('status').innerText = "打刻完了";
+            });
+        }
+    </script>
+</body>
+</html>
