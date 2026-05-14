@@ -8,14 +8,38 @@
         body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         h2 { letter-spacing: 0.2em; margin-bottom: 30px; line-height: 1.5; }
+        
         #main-panel, #warning-panel, #error-panel { display: none; }
-        #error-panel { color: #ff4d4d; border: 1px solid #ff4d4d; padding: 20px; border-radius: 10px; margin-top: 20px; text-align: left; }
-        select, button, input { width: 100%; padding: 18px; margin: 12px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; outline: none; }
+        
+        /* エラーパネルのスタイル */
+        #error-panel { 
+            color: #ff4d4d; 
+            border: 1px solid #ff4d4d; 
+            padding: 20px; 
+            border-radius: 10px; 
+            margin-top: 20px; 
+            text-align: center; 
+        }
+
+        select, button, input { 
+            width: 100%; 
+            padding: 18px; 
+            margin: 12px 0; 
+            font-size: 18px; 
+            border-radius: 8px; 
+            box-sizing: border-box; 
+            outline: none; 
+            transition: 0.3s;
+        }
+        
         select, input { background: #333; color: #fff; border: 1px solid #f1d592; }
+        
         .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; }
         .btn-out { background: transparent; color: #f1d592; border: 1px solid #f1d592; cursor: pointer; }
-        .btn-send { background: #ff4d4d; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
-        #status { margin-top: 25px; font-size: 14px; color: #666; }
+        .btn-send { background: #ff4d4d; color: white; border: none; font-weight: bold; cursor: pointer; }
+        .btn-send:disabled { background: #666; cursor: not-allowed; }
+
+        #status { margin-top: 25px; font-size: 14px; color: #666; min-height: 1.5em; }
         .loading { animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
     </style>
@@ -38,22 +62,27 @@
 
         <div id="error-panel">
             <p style="font-weight:bold; margin-top:0;">⚠️ 出勤打刻の忘れ</p>
-            <p style="font-size:0.8em; color:#ccc;">本日の出勤記録が見つかりません。実際の出勤時刻を入力して申請してください。</p>
+            <p style="font-size:0.8em; color:#ccc; line-height:1.4;">
+                出勤記録が見つかりません。<br>実際の出勤時刻を入力して申請してください。
+            </p>
             <input type="time" id="missedTime">
-            <button class="btn-send" onclick="sendApproval()">管理者へ申請</button>
+            <button id="submitRequestBtn" class="btn-send" onclick="sendApproval()">管理者へ申請</button>
         </div>
 
         <div id="warning-panel">
             <p>店舗外アクセスは許可されていません。</p>
         </div>
+
         <div id="status"></div>
     </div>
 
     <script>
+        // 最新のGAS URL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzHELuQoFwvJdCQUWMGNx38Z1V3F09q0I9rkjZoL9OJtgcYenE5ijlfdyu5fDtJFND4bw/exec";
         let userIp = "";
-        let errorRow = "";
+        let targetRow = "";
 
+        // ページ起動時の処理
         window.onload = function() {
             fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
@@ -64,45 +93,67 @@
             .then(res => res.json())
             .then(res => {
                 document.getElementById('loading-msg').style.display = 'none';
-                if (res.allowed) document.getElementById('main-panel').style.display = 'block';
-                else document.getElementById('warning-panel').style.display = 'block';
+                if (res.allowed) {
+                    document.getElementById('main-panel').style.display = 'block';
+                } else {
+                    document.getElementById('warning-panel').style.display = 'block';
+                }
+            })
+            .catch(() => {
+                document.getElementById('loading-msg').innerText = "通信エラーが発生しました。";
             });
         };
 
+        // 打刻ボタン
         function punch(type) {
             const name = document.getElementById('nameList').value;
             if (!name) { alert("名前を選択してください"); return; }
             if (!confirm(name + "さん、" + type + " を記録しますか？")) return;
 
-            document.getElementById('status').innerText = "通信中...";
-            
-            // fetchの戻り値を確認するためにJSON取得を試みる
+            const statusEl = document.getElementById('status');
+            statusEl.innerText = "データ送信中...";
+            statusEl.className = "loading";
+
             fetch(GAS_URL, {
                 method: 'POST',
-                // mode: 'no-cors'を外すとエラーハンドリングが可能になります
+                // JSONレスポンスを受け取るために mode: 'no-cors' は使いません
                 body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp })
             })
             .then(res => res.json())
             .then(res => {
+                statusEl.className = "";
                 if (res.success) {
-                    alert("記録完了しました。");
+                    alert("記録が完了しました。お疲れ様でした。");
                     location.reload();
                 } else if (res.errorType === 'no_punch_in') {
+                    // 出勤漏れエラーの場合、パネルを切り替え
                     document.getElementById('main-panel').style.display = 'none';
                     document.getElementById('error-panel').style.display = 'block';
-                    errorRow = res.row;
+                    targetRow = res.row; // GASから返された行番号を保持
+                    statusEl.innerText = "出勤記録が見つかりません";
                 }
             })
-            .catch(() => {
-                // no-cors環境での保険（通常は成功メッセージを表示）
-                alert("送信しました。画面を確認してください。");
+            .catch(err => {
+                console.error(err);
+                alert("送信に失敗しました。電波状況を確認してください。");
+                statusEl.innerText = "エラーが発生しました";
+                statusEl.className = "";
             });
         }
 
+        // 出勤漏れ申請ボタン
         function sendApproval() {
             const time = document.getElementById('missedTime').value;
             const name = document.getElementById('nameList').value;
-            if (!time) { alert("時刻を入力してください"); return; }
+            const btn = document.getElementById('submitRequestBtn');
+            const statusEl = document.getElementById('status');
+
+            if (!time) { alert("出勤した時刻を入力してください"); return; }
+
+            // ボタンを無効化して連打防止
+            btn.disabled = true;
+            btn.innerText = "申請中...";
+            statusEl.innerText = "管理者にメールを送信しています...";
 
             fetch(GAS_URL, {
                 method: 'POST',
@@ -110,13 +161,22 @@
                     action: 'requestApproval',
                     name: name,
                     time: time,
-                    date: new Date().toLocaleDateString(),
-                    row: errorRow
+                    date: new Date().toLocaleDateString('ja-JP'),
+                    row: targetRow
                 })
             })
-            .then(() => {
-                alert("管理者に修正依頼を送信しました。そのまま退店してください。");
-                location.reload();
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    alert("管理者に修正依頼を送信しました。\nそのまま退店してください。");
+                    location.reload();
+                }
+            })
+            .catch(err => {
+                console.error(err);
+                alert("申請の送信に失敗しました。管理者に直接連絡してください。");
+                btn.disabled = false;
+                btn.innerText = "管理者へ申請";
             });
         }
     </script>
