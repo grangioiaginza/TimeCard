@@ -9,7 +9,7 @@
         body { font-family: "Yu Mincho", "MS PMincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; }
         .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         
-        /* 登録ボタン：画面の左上隅に固定配置し誤タップを完全に防止 */
+        /* 登録ボタン：画面の左上隅に固定配置 */
         .reg-btn { position: fixed; top: 20px; left: 20px; background: #222; border: 1px solid #f1d592; color: #f1d592; padding: 8px 18px; border-radius: 20px; cursor: pointer; font-size: 13px; transition: 0.3s; z-index: 100; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
         .reg-btn:hover { background: #f1d592; color: #1a1a1a; }
 
@@ -27,7 +27,7 @@
         .label-note { font-size: 9px; color: #ff4d4d; margin-left: 5px; font-weight: normal; }
 
         input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #444; background: #333; color: #fff; box-sizing: border-box; font-size: 16px; outline: none; }
-        input:focus { border-color: #f1d592; }
+        input:focus, select:focus { border-color: #f1d592; }
 
         /* マイナンバー画面秘匿化 */
         .mask-input { -webkit-text-security: disc; }
@@ -45,7 +45,7 @@
         
         #status { margin-top: 20px; font-size: 13px; color: #888; min-height: 3em; line-height: 1.6; }
         
-        /* ビルド情報：画面の右下隅に完全集約して固定配置 */
+        /* ビルド情報：画面の右下隅に固定配置 */
         .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; font-family: monospace; line-height: 1.4; z-index: 100; pointer-events: none; }
         .loading { animation: blink 1s infinite; } @keyframes blink { 50% { opacity: 0.5; } }
     </style>
@@ -61,9 +61,7 @@
         <div id="main-panel">
             <div id="forgotWarning" class="forgot-warning">⚠️ 前回、退勤の打刻忘れがありました。<br>今後は注意してください。</div>
             <select id="nameList" onchange="checkUserStatus()">
-                <option value="">名前を選択してください</option>
-                <option value="スタッフA">スタッフA</option>
-                <option value="スタッフB">スタッフB</option>
+                <option value="">読み込み中...</option>
             </select>
             <button class="btn-in" onclick="punch('出勤')">出 勤</button>
             <button class="btn-out" onclick="punch('退勤')">退 勤</button>
@@ -89,7 +87,7 @@
                 ※全ての項目を正確に入力してください。
             </p>
             <p class="desc-text desc-highlight">
-                最寄り駅からの交通費（往復）ICカード利用時の料金をお調べください。<br>
+                最寄り駅からの交通費（往往復）ICカード利用時の料金をお調べください。<br>
                 お手元にマイナンバーカードをご用意の上、下記の入力を開始してください。
             </p>
             
@@ -105,9 +103,15 @@
             
             <label>電話番号</label><input type="tel" id="tel" placeholder="09012345678">
             <label>E-mail</label><input type="email" id="email" placeholder="example@gioia.page">
-            <label>生年月日（西暦）</label><input type="date" id="birthday">
             
-            <label>自宅からの最寄り駅</label><input type="text" id="station" placeholder="新宿駅">
+            <label>生年月日（西暦）</label>
+            <div class="flex">
+                <div><select id="birthYear"></select></div>
+                <div><select id="birthMonth"></select></div>
+                <div><select id="birthDay"></select></div>
+            </div>
+            
+            <label>自宅からの最寄り駅</label><input type="text" id="station" placeholder="銀座駅">
             
             <div class="flex">
                 <div><label>交通費（往復IC）</label><input type="number" id="ic_fare" placeholder="400"></div>
@@ -122,7 +126,7 @@
             <label>緊急連絡先（ヨミ）</label><input type="text" id="em_yomi">
             
             <label>緊急連絡先（電話）</label><input type="tel" id="em_tel" placeholder="09011112222">
-            <label>関係性</label><input type="text" id="em_rel" placeholder="母">
+            <label>関係性</label><input type="text" id="em_rel" placeholder="配偶者">
             
             <label>マイナンバー（12桁）</label>
             <input type="text" id="mynumber" class="mask-input" maxlength="12" placeholder="数字12桁を入力" autocomplete="off" inputmode="numeric">
@@ -133,7 +137,7 @@
     </div>
 
     <div class="build-info">
-        GITHUB: v1.1.8<br>
+        GITHUB: v1.1.9<br>
         GAS: <span id="gas-build">---</span>
     </div>
 
@@ -147,16 +151,58 @@
             const now = new Date();
             document.getElementById('displayDate').innerText = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日";
             
+            // 生年月日ドロップダウン初期化
+            initBirthdayDropdown();
+
             fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => {
                 userIp = data.ip;
                 return fetch(GAS_URL + "?ip=" + userIp);
             }).then(res => res.json()).then(res => {
                 document.getElementById('loading-msg').style.display = 'none';
                 document.getElementById('gas-build').innerText = res.build;
-                if (res.allowed) document.getElementById('main-panel').style.display = 'block';
-                else document.getElementById('warning-panel').style.display = 'block';
+                
+                if (res.allowed) {
+                    document.getElementById('main-panel').style.display = 'block';
+                    
+                    // 【新機能】GASから受け取ったスタッフ名リストをドロップダウンに自動展開
+                    const nameSelect = document.getElementById('nameList');
+                    nameSelect.innerHTML = '<option value="">名前を選択してください</option>';
+                    res.staffList.forEach(function(staffName) {
+                        const opt = document.createElement('option');
+                        opt.value = staffName;
+                        opt.innerText = staffName;
+                        nameSelect.appendChild(opt);
+                    });
+                    
+                } else {
+                    document.getElementById('warning-panel').style.display = 'block';
+                }
             }).catch(() => { document.getElementById('loading-msg').innerText = "通信エラー"; });
         };
+
+        // 生年月日ドロップダウンの選択肢生成（2000年6月15日を初期選択）
+        function initBirthdayDropdown() {
+            const yearSel = document.getElementById('birthYear');
+            const monthSel = document.getElementById('birthMonth');
+            const daySel = document.getElementById('birthDay');
+            
+            const currentYear = new Date().getFullYear();
+            for (let y = currentYear; y >= 1950; y--) {
+                const opt = new Option(y + "年", y);
+                if (y === 2000) opt.selected = true;
+                yearSel.add(opt);
+            }
+            for (let m = 1; m <= 12; m++) {
+                const opt = new Option(m + "月", m);
+                if (m === 6) opt.selected = true;
+                monthSel.add(opt);
+            }
+            for (let d = 1; d <= 31; d++) {
+                const opt = new Option(d + "日", d);
+                if (d === 15) opt.selected = true;
+                daySel.add(opt);
+            }
+        }
 
         function openModal() { document.getElementById('reg-modal').style.display = 'block'; }
         function closeModal() { document.getElementById('reg-modal').style.display = 'none'; }
@@ -170,6 +216,12 @@
                 return;
             }
 
+            // セレクトボックスの値を yyyy-mm-dd 形式に結合
+            const bYear = document.getElementById('birthYear').value;
+            const bMonth = ("0" + document.getElementById('birthMonth').value).slice(-2);
+            const bDay = ("0" + document.getElementById('birthDay').value).slice(-2);
+            const birthdayStr = bYear + "-" + bMonth + "-" + bDay;
+
             const data = {
                 action: 'registerStaff',
                 lastName: document.getElementById('lastName').value.trim(),
@@ -179,7 +231,7 @@
                 address: document.getElementById('address').value,
                 tel: document.getElementById('tel').value,
                 email: document.getElementById('email').value,
-                birthday: document.getElementById('birthday').value,
+                birthday: birthdayStr, // 結合した文字列を送信
                 station: document.getElementById('station').value,
                 ic_fare: document.getElementById('ic_fare').value,
                 pass_fare: document.getElementById('pass_fare').value,
