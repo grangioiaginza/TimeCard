@@ -5,95 +5,17 @@
     <title>Gran GIOIA Timecard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* Gran GIOIA ブランドデザイン */
-        body { 
-            font-family: "Yu Mincho", "MS PMincho", serif; 
-            background: #1a1a1a; 
-            color: #f1d592; 
-            text-align: center; 
-            margin: 0; 
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-        }
-        .container { 
-            border: 2px solid #f1d592; 
-            padding: 40px 30px; 
-            border-radius: 15px; 
-            max-width: 400px; 
-            width: 90%;
-            background: rgba(0, 0, 0, 0.8);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-        h2 { 
-            letter-spacing: 0.2em; 
-            margin-bottom: 10px; 
-            line-height: 1.5;
-        }
-        .sub-title {
-            font-size: 0.9em;
-            margin-bottom: 30px;
-            color: #888;
-            letter-spacing: 0.1em;
-        }
-
-        /* パネルの表示制御 */
-        #main-panel, #warning-panel { display: none; }
-        
-        #warning-panel { 
-            color: #ff4d4d; 
-            border: 2px dashed #ff4d4d; 
-            padding: 25px 20px;
-            border-radius: 10px;
-            margin-top: 20px;
-        }
-
-        /* 入力要素のスタイル */
-        select, button { 
-            width: 100%; 
-            padding: 18px; 
-            margin: 12px 0; 
-            font-size: 18px; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            transition: 0.3s;
-            outline: none;
-        }
-        select { 
-            background: #333; 
-            color: #fff; 
-            border: 1px solid #f1d592; 
-            cursor: pointer;
-            appearance: none; /* デフォルトの矢印を消す（モダンブラウザ用） */
-        }
-        .btn-in { 
-            background: #f1d592; 
-            color: #1a1a1a; 
-            font-weight: bold; 
-            border: none; 
-            cursor: pointer; 
-            box-shadow: 0 4px 15px rgba(241, 213, 146, 0.2);
-        }
-        .btn-in:hover { background: #fff; transform: translateY(-2px); }
-        .btn-out { 
-            background: transparent; 
-            color: #f1d592; 
-            border: 1px solid #f1d592; 
-            cursor: pointer; 
-        }
-        .btn-out:hover { background: rgba(241, 213, 146, 0.1); transform: translateY(-2px); }
-        
-        #status { 
-            margin-top: 25px; 
-            font-size: 14px; 
-            color: #666; 
-            min-height: 1.5em;
-        }
-        #loading-msg {
-            font-size: 16px;
-            letter-spacing: 0.1em;
-        }
+        body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
+        .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { letter-spacing: 0.2em; margin-bottom: 30px; line-height: 1.5; }
+        #main-panel, #warning-panel, #error-panel { display: none; }
+        #error-panel { color: #ff4d4d; border: 1px solid #ff4d4d; padding: 20px; border-radius: 10px; margin-top: 20px; text-align: left; }
+        select, button, input { width: 100%; padding: 18px; margin: 12px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; outline: none; }
+        select, input { background: #333; color: #fff; border: 1px solid #f1d592; }
+        .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; }
+        .btn-out { background: transparent; color: #f1d592; border: 1px solid #f1d592; cursor: pointer; }
+        .btn-send { background: #ff4d4d; color: white; border: none; font-weight: bold; cursor: pointer; margin-top: 5px; }
+        #status { margin-top: 25px; font-size: 14px; color: #666; }
         .loading { animation: blink 1s infinite; }
         @keyframes blink { 50% { opacity: 0.5; } }
     </style>
@@ -101,11 +23,9 @@
 <body>
     <div class="container">
         <h2>Gran GIOIA</h2>
-        
-        <div id="loading-msg" class="loading">ネットワーク認証中...</div>
+        <div id="loading-msg" class="loading">認証中...</div>
 
         <div id="main-panel">
-            <div class="sub-title">Timecard System</div>
             <select id="nameList">
                 <option value="">名前を選択してください</option>
                 <option value="スタッフA">スタッフA</option>
@@ -116,95 +36,87 @@
             <button class="btn-out" onclick="punch('退勤')">退 勤</button>
         </div>
 
-        <div id="warning-panel">
-            <h3 style="margin-top:0; letter-spacing: 0.1em;">ACCESS DENIED</h3>
-            <p style="line-height: 1.6;">店舗ネットワーク外からのアクセスです。<br>店舗のWi-Fiに接続して再度お試しください。</p>
+        <div id="error-panel">
+            <p style="font-weight:bold; margin-top:0;">⚠️ 出勤打刻の忘れ</p>
+            <p style="font-size:0.8em; color:#ccc;">本日の出勤記録が見つかりません。実際の出勤時刻を入力して申請してください。</p>
+            <input type="time" id="missedTime">
+            <button class="btn-send" onclick="sendApproval()">管理者へ申請</button>
         </div>
 
+        <div id="warning-panel">
+            <p>店舗外アクセスは許可されていません。</p>
+        </div>
         <div id="status"></div>
     </div>
 
     <script>
-        // 最新のGAS URL (FND4bw)
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzHELuQoFwvJdCQUWMGNx38Z1V3F09q0I9rkjZoL9OJtgcYenE5ijlfdyu5fDtJFND4bw/exec";
         let userIp = "";
+        let errorRow = "";
 
-        // ページ読み込み時にIPを取得し、GASへ認証を依頼
         window.onload = function() {
-            const loadingMsg = document.getElementById('loading-msg');
-            const mainPanel = document.getElementById('main-panel');
-            const warningPanel = document.getElementById('warning-panel');
-            const statusEl = document.getElementById('status');
-
-            // 1. 自身のグローバルIPを取得
             fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(data => {
                 userIp = data.ip;
-                // 2. GASのdoGetへ認証リクエスト (URLパラメータにIPを付与)
                 return fetch(GAS_URL + "?ip=" + userIp);
             })
             .then(res => res.json())
             .then(res => {
-                loadingMsg.style.display = 'none';
-                if (res.allowed) {
-                    // 許可IPの場合：操作画面を表示
-                    mainPanel.style.display = 'block';
-                    statusEl.innerText = "認証完了";
-                } else {
-                    // 不許可IPの場合：警告画面を表示 (IPは表示しない)
-                    warningPanel.style.display = 'block';
-                }
-            })
-            .catch(err => {
-                console.error(err);
-                loadingMsg.innerText = "接続エラー。再読み込みしてください。";
-                loadingMsg.className = "";
+                document.getElementById('loading-msg').style.display = 'none';
+                if (res.allowed) document.getElementById('main-panel').style.display = 'block';
+                else document.getElementById('warning-panel').style.display = 'block';
             });
         };
 
-        // 打刻ボタン押下時の処理
         function punch(type) {
             const name = document.getElementById('nameList').value;
-            const statusEl = document.getElementById('status');
+            if (!name) { alert("名前を選択してください"); return; }
+            if (!confirm(name + "さん、" + type + " を記録しますか？")) return;
 
-            if (!name) {
-                alert("名前を選択してください");
-                return;
-            }
+            document.getElementById('status').innerText = "通信中...";
             
-            if (!confirm(name + "さん、" + type + " を記録しますか？")) {
-                return;
-            }
-
-            statusEl.innerText = "送信中...";
-            statusEl.className = "loading";
-
-            const payload = {
-                action: 'punch',
-                name: name,
-                type: type,
-                ip: userIp
-            };
-
-            // GASへデータを送信
+            // fetchの戻り値を確認するためにJSON取得を試みる
             fetch(GAS_URL, {
                 method: 'POST',
-                mode: 'no-cors', // ブラウザの制限を回避して送信
-                body: JSON.stringify(payload)
+                // mode: 'no-cors'を外すとエラーハンドリングが可能になります
+                body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp })
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (res.success) {
+                    alert("記録完了しました。");
+                    location.reload();
+                } else if (res.errorType === 'no_punch_in') {
+                    document.getElementById('main-panel').style.display = 'none';
+                    document.getElementById('error-panel').style.display = 'block';
+                    errorRow = res.row;
+                }
+            })
+            .catch(() => {
+                // no-cors環境での保険（通常は成功メッセージを表示）
+                alert("送信しました。画面を確認してください。");
+            });
+        }
+
+        function sendApproval() {
+            const time = document.getElementById('missedTime').value;
+            const name = document.getElementById('nameList').value;
+            if (!time) { alert("時刻を入力してください"); return; }
+
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    action: 'requestApproval',
+                    name: name,
+                    time: time,
+                    date: new Date().toLocaleDateString(),
+                    row: errorRow
+                })
             })
             .then(() => {
-                // 送信完了の通知
-                alert(name + "さんの「" + type + "」を送信しました。");
-                statusEl.innerText = "打刻完了: " + type;
-                statusEl.className = "";
-                statusEl.style.color = "#f1d592";
-            })
-            .catch(err => {
-                console.error(err);
-                alert("送信に失敗しました。");
-                statusEl.innerText = "送信エラー";
-                statusEl.className = "";
+                alert("管理者に修正依頼を送信しました。そのまま退店してください。");
+                location.reload();
             });
         }
     </script>
