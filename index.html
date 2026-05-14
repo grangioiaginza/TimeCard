@@ -5,6 +5,9 @@
     <title>Gran GIOIA Timecard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
+        /* 【修正】すべての要素のサイズ計算を内枠基準に固定し、横はみ出しを完全に防止 */
+        *, *::before, *::after { box-sizing: border-box; }
+
         /* 全体レイアウト */
         body { font-family: "Yu Mincho", "MS PMincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; }
         .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
@@ -15,7 +18,9 @@
 
         /* モーダル（登録画面） */
         #reg-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; padding: 20px 0; }
-        .modal-content { background: #222; border: 1px solid #f1d592; width: 95%; max-width: 500px; margin: auto; padding: 30px; border-radius: 15px; text-align: left; }
+        
+        /* 【修正】スマホ画面に100%フィットするよう余白と幅のバランスを調整 */
+        .modal-content { background: #222; border: 1px solid #f1d592; width: 92%; max-width: 500px; margin: 10px auto; padding: 25px 20px; border-radius: 15px; text-align: left; }
         
         h2 { letter-spacing: 0.2em; margin-bottom: 20px; line-height: 1.5; }
         h3 { color: #f1d592; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; text-align: center; }
@@ -26,7 +31,7 @@
         label { font-size: 11px; color: #f1d592; margin-top: 12px; display: block; letter-spacing: 0.05em; }
         .label-note { font-size: 9px; color: #ff4d4d; margin-left: 5px; font-weight: normal; }
 
-        input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #444; background: #333; color: #fff; box-sizing: border-box; font-size: 16px; outline: none; }
+        input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #444; background: #333; color: #fff; font-size: 16px; outline: none; }
         input:focus, select:focus { border-color: #f1d592; }
 
         /* マイナンバー画面秘匿化 */
@@ -159,7 +164,7 @@
             document.getElementById('displayDate').innerText = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日";
             
             initBirthdayDropdown();
-            initZipcodeAutocomplete(); // 郵便番号自動入力リスナーの起動
+            initZipcodeAutocomplete();
 
             fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => {
                 userIp = data.ip;
@@ -185,21 +190,18 @@
             });
         };
 
-        // 【新機能】郵便番号自動住所補完ロジック
         function initZipcodeAutocomplete() {
             document.getElementById('zipcode').addEventListener('input', function() {
-                const zip = this.value.replace(/-/g, '').trim(); // ハイフンを自動除去
+                const zip = this.value.replace(/-/g, '').trim();
                 if (zip.length === 7 && !isNaN(zip)) {
                     const addressInput = document.getElementById('address');
                     addressInput.placeholder = "住所を検索中...";
                     
-                    // クリーンな無料API「zipcloud」を使用して住所情報を高速検索
                     fetch('https://zipcloud.ibsnet.co.jp/api/search?zipcode=' + zip)
                     .then(res => res.json())
                     .then(res => {
                         if (res.status === 200 && res.results) {
                             const result = res.results[0];
-                            // 都道府県 + 市区町村 + 町域名 をガッチャンコして代入
                             addressInput.value = result.address1 + result.address2 + result.address3;
                         } else {
                             addressInput.placeholder = "該当する住所が見つかりません";
@@ -273,7 +275,7 @@
             .then(res => res.json())
             .then(res => {
                 if(res.success) { alert("完了しました。"); location.reload(); }
-                else { alert("登録失敗。既に同名のスタッフが既に存在する可能性があります。"); btn.disabled = false; btn.innerText = "登録を実行する"; }
+                else { alert("登録失敗。既に同名のスタッフが存在する可能性があります。"); btn.disabled = false; btn.innerText = "登録を実行する"; }
             }).catch(() => { alert("通信エラーが発生しました。"); btn.disabled = false; btn.innerText = "登録を実行する"; });
         }
 
