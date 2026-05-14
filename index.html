@@ -5,13 +5,11 @@
     <title>Gran GIOIA Timecard</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
-        /* Gran GIOIA デザインコンセプト */
         body { 
-            font-family: "Yu Mincho", "MS PMincho", serif; 
+            font-family: "Yu Mincho", serif; 
             background: #1a1a1a; 
             color: #f1d592; 
             text-align: center; 
-            padding: 50px 20px; 
             margin: 0; 
             display: flex;
             justify-content: center;
@@ -22,143 +20,103 @@
             border: 2px solid #f1d592; 
             padding: 40px 30px; 
             border-radius: 15px; 
-            max-width: 450px; 
-            width: 100%;
-            background: rgba(0, 0, 0, 0.6);
-            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            max-width: 400px; 
+            width: 90%;
+            background: rgba(0, 0, 0, 0.8);
         }
-        h2 { 
-            letter-spacing: 0.2em; 
-            font-size: 24px;
-            margin-bottom: 30px;
-            line-height: 1.5;
-        }
-        select, button { 
-            width: 100%; 
-            padding: 18px; 
-            margin: 12px 0; 
-            font-size: 18px; 
-            border-radius: 8px; 
-            box-sizing: border-box; 
-            transition: 0.3s;
-            outline: none;
-        }
-        select { 
-            background: #333; 
-            color: #fff; 
-            border: 1px solid #f1d592; 
-            cursor: pointer;
-        }
-        .btn-in { 
-            background: #f1d592; 
-            color: #1a1a1a; 
-            font-weight: bold; 
-            cursor: pointer; 
-            border: none; 
-            box-shadow: 0 4px 15px rgba(241, 213, 146, 0.3);
-        }
-        .btn-in:hover { background: #fff; transform: translateY(-2px); }
-        .btn-out { 
-            background: transparent; 
-            color: #f1d592; 
-            border: 1px solid #f1d592; 
-            cursor: pointer; 
-        }
-        .btn-out:hover { background: rgba(241, 213, 146, 0.1); transform: translateY(-2px); }
+        /* 初期状態では操作パネルを隠す */
+        #main-panel { display: none; }
         
-        #status { 
-            margin-top: 25px; 
-            font-size: 14px; 
-            letter-spacing: 0.1em;
-            color: #aaa;
-            min-height: 1.5em;
+        /* 警告表示のスタイル */
+        #warning-panel { 
+            display: none; 
+            color: #ff4d4d; 
+            border: 2px dashed #ff4d4d; 
+            padding: 20px;
+            border-radius: 10px;
         }
-        .loading { animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
+
+        h2 { letter-spacing: 0.2em; margin-bottom: 30px; }
+        select, button { width: 100%; padding: 18px; margin: 12px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; }
+        select { background: #333; color: #fff; border: 1px solid #f1d592; }
+        .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; }
+        .btn-out { background: transparent; color: #f1d592; border: 1px solid #f1d592; cursor: pointer; }
+        #status { margin-top: 25px; font-size: 14px; color: #888; }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Gran GIOIA<br><span style="font-size: 16px;">Timecard System</span></h2>
-        
-        <select id="nameList">
-            <option value="">名前を選択してください</option>
-            <option value="スタッフA">スタッフA</option>
-            <option value="スタッフB">スタッフB</option>
-            <option value="スタッフC">スタッフC</option>
-        </select>
+        <h2>Gran GIOIA</h2>
 
-        <button class="btn-in" onclick="punch('出勤')">出 勤</button>
-        <button class="btn-out" onclick="punch('退勤')">退 勤</button>
-        
-        <div id="status">システム接続中...</div>
+        <div id="loading-msg">ネットワーク認証中...</div>
+
+        <div id="main-panel">
+            <p style="font-size: 0.9em; margin-bottom: 20px;">Timecard System</p>
+            <select id="nameList">
+                <option value="">名前を選択してください</option>
+                <option value="スタッフA">スタッフA</option>
+                <option value="スタッフB">スタッフB</option>
+                <option value="スタッフC">スタッフC</option>
+            </select>
+            <button class="btn-in" onclick="punch('出勤')">出 勤</button>
+            <button class="btn-out" onclick="punch('退勤')">退 勤</button>
+        </div>
+
+        <div id="warning-panel">
+            <h3 style="margin-top:0;">WARNING</h3>
+            <p>店舗のWi-Fiに接続してください。<br>現在地からの打刻は許可されていません。</p>
+            <p id="your-ip" style="font-size: 0.8em; color: #666;"></p>
+        </div>
+
+        <div id="status"></div>
     </div>
 
     <script>
-        // 設定されたGASのURL
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzHELuQoFwvJdCQUWMGNx38Z1V3F09q0I9rkjZoL9OJtgcYenE5ijlfdyu5fDtJFND4bw/exec";
         let userIp = "";
 
-        // 1. 起動時に店舗のグローバルIPを取得
         window.onload = function() {
-            const statusEl = document.getElementById('status');
+            // 1. まず自分のIPを取得
             fetch('https://api.ipify.org?format=json')
             .then(res => res.json())
             .then(data => {
                 userIp = data.ip;
-                statusEl.innerText = "ネットワーク接続：完了";
-                statusEl.style.color = "#f1d592";
+                // 2. GASにIPが許可されているか問い合わせ
+                return fetch(GAS_URL + "?ip=" + userIp);
+            })
+            .then(res => res.json())
+            .then(res => {
+                document.getElementById('loading-msg').style.display = 'none';
+                if (res.allowed) {
+                    // OKなら操作パネルを表示
+                    document.getElementById('main-panel').style.display = 'block';
+                    document.getElementById('status').innerText = "店舗内ネットワーク：認証済";
+                } else {
+                    // NGなら警告を表示
+                    document.getElementById('warning-panel').style.display = 'block';
+                    document.getElementById('your-ip').innerText = "Your IP: " + userIp;
+                }
             })
             .catch(err => {
-                statusEl.innerText = "IP取得エラー: ページを更新してください";
-                statusEl.style.color = "red";
+                document.getElementById('loading-msg').innerText = "通信エラーが発生しました。";
             });
         };
 
-        // 2. 打刻ボタン押下時の処理
         function punch(type) {
             const name = document.getElementById('nameList').value;
-            const statusEl = document.getElementById('status');
+            if (!name) { alert("名前を選択してください"); return; }
+            if (!confirm(name + "さん、" + type + " を記録しますか？")) return;
 
-            if (!name) {
-                alert("名前を選択してください");
-                return;
-            }
-            
-            if (!confirm(name + "さん、" + type + " でよろしいですか？")) {
-                return;
-            }
+            document.getElementById('status').innerText = "送信中...";
 
-            statusEl.innerText = type + " データを送信中...";
-            statusEl.className = "loading";
-
-            const payload = {
-                action: 'punch',
-                name: name,
-                type: type,
-                ip: userIp
-            };
-
-            // GASへPOST送信
-            // ※mode: 'no-cors' を使用することでブラウザのCORS制限を回避します
             fetch(GAS_URL, {
                 method: 'POST',
                 mode: 'no-cors',
-                body: JSON.stringify(payload)
+                body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp })
             })
             .then(() => {
-                // 送信成功時（no-corsのため中身の確認はできませんが送信は完了しています）
-                alert("打刻データを送信しました。\nマスターログを確認してください。");
-                statusEl.innerText = "打刻完了: " + name + " (" + type + ")";
-                statusEl.className = "";
-                statusEl.style.color = "#00ff00";
-            })
-            .catch(err => {
-                console.error(err);
-                alert("通信エラーが発生しました。");
-                statusEl.innerText = "送信失敗";
-                statusEl.className = "";
-                statusEl.style.color = "red";
+                alert("送信完了しました。");
+                document.getElementById('status').innerText = "打刻完了";
             });
         }
     </script>
