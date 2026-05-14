@@ -6,24 +6,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
         *, *::before, *::after { box-sizing: border-box; }
-        body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
-        .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); }
+        body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; position: relative; }
+        .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        
         .reg-btn { position: fixed; top: 15px; left: 15px; background: transparent; border: 1px solid #444; color: #888; padding: 5px 12px; border-radius: 4px; cursor: pointer; font-size: 11px; z-index: 100; }
+        .reg-btn:hover { border-color: #f1d592; color: #f1d592; background: rgba(241, 213, 146, 0.05); }
+
         #reg-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 1000; overflow-y: auto; padding: 20px 0; }
-        .modal-content { background: #222; border: 1px solid #f1d592; width: 92%; max-width: 500px; margin: auto; padding: 25px 20px; border-radius: 15px; text-align: left; }
-        h2 { letter-spacing: 0.2em; }
-        h3 { color: #f1d592; border-bottom: 1px solid #444; text-align: center; }
-        label { font-size: 11px; color: #f1d592; margin-top: 12px; display: block; }
+        .modal-content { background: #222; border: 1px solid #f1d592; width: 92%; max-width: 500px; margin: 10px auto; padding: 25px 20px; border-radius: 15px; text-align: left; }
+        
+        h2 { letter-spacing: 0.2em; margin-bottom: 20px; line-height: 1.5; }
+        h3 { color: #f1d592; border-bottom: 1px solid #444; padding-bottom: 10px; margin-top: 0; text-align: center; }
+        
+        .desc-text { font-size: 11px; color:#ccc; line-height:1.6; margin: 15px 0; }
+        .desc-highlight { color: #f1d592; font-weight: bold; }
+        
+        label { font-size: 11px; color: #f1d592; margin-top: 12px; display: block; letter-spacing: 0.05em; }
+        .label-note { font-size: 9px; color: #ff4d4d; margin-left: 5px; font-weight: normal; }
+        .req-mark { color: #ff4d4d; font-size: 10px; margin-left: 4px; font-weight: bold; }
+        .opt-mark { color: #777; font-size: 10px; margin-left: 4px; }
+
         input, select, button { width: 100%; padding: 14px; margin: 6px 0; border-radius: 8px; border: 1px solid #444; background: #333; color: #fff; font-size: 16px; outline: none; }
-        .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; padding: 18px; }
-        .btn-close { background: #444; border: none; color: #ccc; cursor: pointer; margin-top: 10px; }
-        .flex { display: flex; gap: 10px; } .flex div { flex: 1; }
+        input:focus, select:focus { border-color: #f1d592; }
+
         .mask-input { -webkit-text-security: disc; }
-        .upload-area { background: #1a1a1a; border: 1px dashed #f1d592; padding: 10px; border-radius: 8px; margin-top: 5px; text-align: center; }
+
+        .upload-area { background: #1a1a1a; border: 1px dashed #f1d592; padding: 10px; border-radius: 8px; margin-top: 5px; text-align: center; position: relative; }
+        .upload-area input[type="file"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
         .upload-area span { font-size: 10px; color: #888; }
-        .preview-img { width: 100%; height: 100px; object-fit: contain; display: none; margin-top: 5px; border-radius: 4px; }
-        #punch-elements, #warning-panel { display: none; }
-        #warning-panel { color: #ff4d4d; border: 1px dashed #ff4d4d; padding: 20px; border-radius: 10px; }
+        .preview-img { width: 100%; height: 120px; object-fit: contain; display: none; margin-top: 8px; border-radius: 4px; border: 1px solid #444; }
+
+        .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; padding: 18px; margin-top: 15px; }
+        .btn-close { background: #444; border: none; color: #ccc; cursor: pointer; margin-top: 10px; padding: 10px; font-size: 14px; }
+        
+        .flex { display: flex; gap: 10px; }
+        .flex div { flex: 1; }
+
+        #punch-elements, #error-panel, #warning-panel { display: none; }
+        #warning-panel { color: #ff4d4d; border: 1px dashed #ff4d4d; padding: 20px; border-radius: 10px; font-size: 14px; line-height: 1.6; margin-top: 10px; }
+        #status { margin-top: 20px; font-size: 13px; color: #888; min-height: 3em; line-height: 1.6; }
+        .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; font-family: monospace; line-height: 1.4; z-index: 100; pointer-events: none; }
         .loading { animation: blink 1s infinite; } @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
@@ -34,73 +56,89 @@
     <div class="container">
         <h2>Gran GIOIA</h2>
         <div id="punch-panel">
-            <div id="punch-loading" class="loading">ネットワーク認証中...</div>
+            <div id="punch-loading" class="loading" style="font-size: 14px; color:#666; margin: 20px 0;">ネットワーク認証中...</div>
             <div id="punch-elements">
-                <select id="nameList" onchange="checkUserStatus()"><option value="">読み込み中...</option></select>
+                <select id="nameList" onchange="checkUserStatus()"><option value="">名前を選択してください</option></select>
                 <button class="btn-in" onclick="punch('出勤')">出 勤</button>
                 <button class="btn-out" onclick="punch('退勤')">退 勤</button>
             </div>
             <div id="warning-panel">⚠️ 店舗ネットワーク外です。</div>
         </div>
-        <div id="status" style="margin-top:20px; font-size:13px; color:#888;"></div>
+        <div id="status"></div>
     </div>
 
     <div id="reg-modal">
         <div class="modal-content">
             <h3>スタッフ新規登録</h3>
+            <hr style="border:0; border-top:1px solid #444;">
+            <p class="desc-text desc-highlight">最寄り駅からの交通費（往復IC）をお調べください。マイナンバーカードをご用意の上、下記の入力を開始してください。</p>
+            
             <div class="flex">
-                <div><label>姓</label><input type="text" id="lastName" placeholder="田中"></div>
-                <div><label>名</label><input type="text" id="firstName" placeholder="太郎"></div>
+                <div><label>姓<span class="req-mark">(必須)</span></label><input type="text" id="lastName" placeholder="田中"></div>
+                <div><label>名<span class="req-mark">(必須)</span></label><input type="text" id="firstName" placeholder="太郎"></div>
             </div>
-            <label>ヨミ（カタカナ）</label><input type="text" id="yomi" placeholder="タナカ タロウ">
-            <label>郵便番号</label><input type="text" id="zipcode" placeholder="1234567">
-            <label>住所</label><input type="text" id="address">
-            <label>電話番号</label><input type="tel" id="tel">
-            <label>E-mail</label><input type="email" id="email">
-            <label>生年月日</label>
+            <label>ヨミ（カタカナ）<span class="req-mark">(必須)</span></label><input type="text" id="yomi" placeholder="タナカ タロウ">
+            <label>郵便番号<span class="req-mark">(必須)</span></label><input type="text" id="zipcode" placeholder="1234567">
+            <label>住所<span class="req-mark">(必須)</span></label><input type="text" id="address" placeholder="東京都中央区銀座...">
+            <label>電話番号<span class="req-mark">(必須)</span></label><input type="tel" id="tel" placeholder="09012345678">
+            <label>E-mail<span class="req-mark">(必須)</span></label><input type="email" id="email" placeholder="example@gioia.page">
+            <label>生年月日<span class="req-mark">(必須)</span></label>
             <div class="flex">
                 <div><select id="birthYear"></select></div>
                 <div><select id="birthMonth"></select></div>
                 <div><select id="birthDay"></select></div>
             </div>
-            <label>自宅からの最寄り駅</label><input type="text" id="station" placeholder="銀座駅">
-            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
+            <label>自宅からの最寄り駅<span class="req-mark">(必須)</span></label><input type="text" id="station" placeholder="銀座駅">
+            <div class="flex">
+                <div><label>交通費（往復IC）<span class="opt-mark">(任意)</span></label><input type="number" id="ic_fare" placeholder="400"></div>
+                <div><label>交通費（定期代）<span class="opt-mark">(任意)</span></label><input type="number" id="pass_fare" placeholder="5000"></div>
+            </div>
+            <label>緊急連絡先（氏名）<span class="req-mark">(必須)</span></label><input type="text" id="em_name">
+            <label>緊急連絡先（ヨミ）<span class="req-mark">(必須)</span></label><input type="text" id="em_yomi">
+            <label>緊急連絡先（電話）<span class="req-mark">(必須)</span></label><input type="tel" id="em_tel">
+            <label>関係性<span class="req-mark">(必須)</span></label><input type="text" id="em_rel" placeholder="配偶者">
             
-            <label>免許証 (表面)</label>
-            <div class="upload-area">
-                <input type="file" id="file_licenseF" accept="image/*" onchange="previewAndResize(this, 'prev_licenseF')">
-                <span>タップして撮影または選択</span>
-                <img id="prev_licenseF" class="preview-img">
-            </div>
-            <label>免許証 (裏面)</label>
-            <div class="upload-area">
-                <input type="file" id="file_licenseB" accept="image/*" onchange="previewAndResize(this, 'prev_licenseB')">
-                <img id="prev_licenseB" class="preview-img">
-            </div>
+            <hr style="border:0; border-top:1px solid #444; margin:20px 0;">
+            <label>マイナンバー（12桁）<span class="req-mark">(必須)</span></label>
+            <input type="text" id="mynumber" class="mask-input" maxlength="12" placeholder="数字12桁を入力" autocomplete="off" inputmode="numeric">
 
-            <label>マイナンバーカード (表面)</label>
+            <label>マイナンバーカード (表面)<span class="opt-mark">(任意)</span></label>
             <div class="upload-area">
-                <input type="file" id="file_mynumberF" accept="image/*" onchange="previewAndResize(this, 'prev_mynumberF')">
+                <input type="file" id="file_mynumberF" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_mynumberF')">
+                <span>カメラを起動して撮影</span>
                 <img id="prev_mynumberF" class="preview-img">
             </div>
-            <label>マイナンバーカード (裏面)</label>
+            <label>マイナンバーカード (裏面)<span class="opt-mark">(任意)</span></label>
             <div class="upload-area">
-                <input type="file" id="file_mynumberB" accept="image/*" onchange="previewAndResize(this, 'prev_mynumberB')">
+                <input type="file" id="file_mynumberB" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_mynumberB')">
+                <span>カメラを起動して撮影</span>
                 <img id="prev_mynumberB" class="preview-img">
             </div>
 
-            <label>マイナンバー (12桁)</label>
-            <input type="text" id="mynumber" class="mask-input" maxlength="12" inputmode="numeric">
-            
+            <label>免許証 (表面)<span class="opt-mark">(任意)</span></label>
+            <div class="upload-area">
+                <input type="file" id="file_licenseF" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_licenseF')">
+                <span>カメラを起動して撮影</span>
+                <img id="prev_licenseF" class="preview-img">
+            </div>
+            <label>免許証 (裏面)<span class="opt-mark">(任意)</span></label>
+            <div class="upload-area">
+                <input type="file" id="file_licenseB" accept="image/*" capture="environment" onchange="previewAndResize(this, 'prev_licenseB')">
+                <span>カメラを起動して撮影</span>
+                <img id="prev_licenseB" class="preview-img">
+            </div>
+
             <button class="btn-in" onclick="submitRegistration()" id="regSubmitBtn" style="margin-top:30px;">登録を実行する</button>
             <button class="btn-close" onclick="closeModal()">キャンセル</button>
         </div>
     </div>
 
+    <div class="build-info">GITHUB: v1.2.1<br>GAS: <span id="gas-build">---</span></div>
+
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyzOY0K5lid7GwgAhhHoK_BVWAwvJeFjS40nNUZ6TMPlyuPJF2NkvAlQhKS1w3bJvhT/exec";
         let userIp = "";
-        const imageDB = {}; // リサイズ済み画像を一時保管
+        const imageDB = {};
 
         window.onload = function() {
             initBirthdayDropdown();
@@ -110,6 +148,7 @@
                 return fetch(GAS_URL + "?ip=" + userIp);
             }).then(res => res.json()).then(res => {
                 document.getElementById('punch-loading').style.display = 'none';
+                document.getElementById('gas-build').innerText = res.build;
                 const nameSelect = document.getElementById('nameList');
                 nameSelect.innerHTML = '<option value="">名前を選択してください</option>';
                 res.staffList.forEach(n => nameSelect.add(new Option(n, n)));
@@ -118,25 +157,23 @@
             });
         };
 
-        // 画像リサイズ＆プレビュー処理
         function previewAndResize(input, prevId) {
-            const file = input.files[0];
-            if (!file) return;
+            const file = input.files[0]; if (!file) return;
             const reader = new FileReader();
             reader.onload = function(e) {
                 const img = new Image();
                 img.onload = function() {
                     const canvas = document.createElement('canvas');
-                    const MAX_WIDTH = 1200; // 最大幅を1200pxに制限して軽量化
-                    let width = img.width; let height = img.height;
+                    const MAX_WIDTH = 1200;
+                    let width = img.width, height = img.height;
                     if (width > MAX_WIDTH) { height *= MAX_WIDTH / width; width = MAX_WIDTH; }
                     canvas.width = width; canvas.height = height;
-                    const ctx = canvas.getContext('2d');
-                    ctx.drawImage(img, 0, 0, width, height);
-                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7); // 画質0.7で圧縮
+                    canvas.getContext('2d').drawImage(img, 0, 0, width, height);
+                    const dataUrl = canvas.toDataURL('image/jpeg', 0.7);
                     document.getElementById(prevId).src = dataUrl;
                     document.getElementById(prevId).style.display = 'block';
                     imageDB[prevId.replace('prev_', '')] = dataUrl;
+                    input.parentElement.querySelector('span').innerText = "撮影済み (変更する場合は再タップ)";
                 };
                 img.src = e.target.result;
             };
@@ -144,33 +181,37 @@
         }
 
         function submitRegistration() {
-            const lastName = document.getElementById('lastName').value.trim();
-            const firstName = document.getElementById('firstName').value.trim();
-            const mynumber = document.getElementById('mynumber').value.trim();
-            if (!lastName || !firstName || mynumber.length !== 12) { alert("入力不備があります。画像以外の項目は全て必須です。"); return; }
-            
             const btn = document.getElementById('regSubmitBtn');
-            btn.disabled = true; btn.innerText = "データ送信中（画像がある場合は時間がかかります）...";
-
             const data = {
                 action: 'registerStaff',
-                lastName: lastName, firstName: firstName,
-                yomi: document.getElementById('yomi').value,
-                zipcode: document.getElementById('zipcode').value,
-                address: document.getElementById('address').value,
-                tel: document.getElementById('tel').value,
-                email: document.getElementById('email').value,
+                lastName: document.getElementById('lastName').value.trim(),
+                firstName: document.getElementById('firstName').value.trim(),
+                yomi: document.getElementById('yomi').value.trim(),
+                zipcode: document.getElementById('zipcode').value.trim(),
+                address: document.getElementById('address').value.trim(),
+                tel: document.getElementById('tel').value.trim(),
+                email: document.getElementById('email').value.trim(),
                 birthday: document.getElementById('birthYear').value + "-" + ("0" + document.getElementById('birthMonth').value).slice(-2) + "-" + ("0" + document.getElementById('birthDay').value).slice(-2),
-                station: document.getElementById('station').value,
-                mynumber: mynumber,
-                images: imageDB // 圧縮済み画像データ
+                station: document.getElementById('station').value.trim(),
+                ic_fare: document.getElementById('ic_fare').value,
+                pass_fare: document.getElementById('pass_fare').value,
+                em_name: document.getElementById('em_name').value.trim(),
+                em_yomi: document.getElementById('em_yomi').value.trim(),
+                em_tel: document.getElementById('em_tel').value.trim(),
+                em_rel: document.getElementById('em_rel').value.trim(),
+                mynumber: document.getElementById('mynumber').value.trim(),
+                images: imageDB
             };
 
+            if(!data.lastName || !data.firstName || !data.yomi || !data.tel || data.mynumber.length !== 12) { alert("必須項目に入力不備があるか、マイナンバーが12桁ではありません。"); return; }
+            if(!confirm(data.lastName + " " + data.firstName + " さんを登録しますか？")) return;
+
+            btn.disabled = true; btn.innerText = "登録中（数秒かかります）...";
             fetch(GAS_URL, { method: 'POST', body: JSON.stringify(data) })
             .then(res => res.json()).then(res => {
-                if(res.success) { alert("登録が完了しました。画像も保存されました。"); location.reload(); }
-                else { alert("登録失敗。同名のスタッフがいる可能性があります。"); btn.disabled = false; }
-            }).catch(() => { alert("エラーが発生しました。"); btn.disabled = false; });
+                if(res.success) { alert("完了しました。"); location.reload(); }
+                else { alert("エラーが発生しました。"); btn.disabled = false; btn.innerText = "登録を実行する"; }
+            }).catch(() => { alert("通信エラーが発生しました。"); btn.disabled = false; });
         }
 
         function openModal() { document.getElementById('reg-modal').style.display = 'block'; }
@@ -185,13 +226,24 @@
             });
         }
         function initBirthdayDropdown() {
-            const y=document.getElementById('birthYear'), m=document.getElementById('birthMonth'), d=document.getElementById('birthDay');
-            for(let i=2010; i>=1950; i--) y.add(new Option(i+"年", i)); y.value="2000";
+            const y=document.getElementById('birthYear'), m=document.getElementById('birthMonth'), d=document.getElementById('birthDay'), c=new Date().getFullYear();
+            for(let i=c; i>=1950; i--) y.add(new Option(i+"年", i)); y.value="2000";
             for(let i=1; i<=12; i++) m.add(new Option(i+"月", i)); m.value="6";
             for(let i=1; i<=31; i++) d.add(new Option(i+"日", i)); d.value="15";
         }
-        function checkUserStatus() { /* 以前と同じ */ }
-        function punch(t) { /* 以前と同じ */ }
+        function checkUserStatus() {
+            const n = document.getElementById('nameList').value;
+            if(!n) return;
+            fetch(GAS_URL + "?ip=" + userIp + "&name=" + encodeURIComponent(n)).then(r => r.json()).then(r => {
+                const s = document.getElementById('status');
+                if(r.lastRecord) s.innerHTML = "前回: " + (r.lastRecord.in || "--") + " 〜 " + (r.lastRecord.out || "--");
+            });
+        }
+        function punch(type) {
+            const name = document.getElementById('nameList').value; if(!name) return;
+            fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp }) })
+            .then(r => r.json()).then(r => { if(r.success) { alert("完了しました。"); location.reload(); } });
+        }
     </script>
 </body>
 </html>
