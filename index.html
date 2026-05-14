@@ -15,7 +15,7 @@
         .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; }
         .btn-out { background: transparent; color: #f1d592; border: 1px solid #f1d592; cursor: pointer; }
         .btn-send { background: #ff4d4d; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .forgot-warning { background: #851414; color: white; padding: 10px; border-radius: 5px; font-size: 0.8em; margin-bottom: 15px; display: none; }
+        .forgot-warning { background: #851414; color: white; padding: 12px; border-radius: 8px; font-size: 0.85em; margin-bottom: 15px; display: none; line-height: 1.4; }
         #status { margin-top: 20px; font-size: 13px; color: #888; min-height: 3em; line-height: 1.6; }
         .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; font-family: monospace; }
         .loading { animation: blink 1s infinite; } @keyframes blink { 50% { opacity: 0.5; } }
@@ -39,23 +39,23 @@
         </div>
 
         <div id="error-panel">
-            <div id="displayDate" style="font-weight:bold; margin-bottom:10px;"></div>
-            <p style="font-size:0.85em; color:#ccc;">本日の出勤記録が見つかりません。<br>実際の出勤時刻を入力して申請してください。</p>
+            <div id="displayDate" style="font-weight:bold; margin-bottom:10px; font-size:1.1em;"></div>
+            <p style="font-size:0.85em; color:#ccc; line-height:1.5;">本日の出勤記録が見つかりません。<br>実際の出勤時刻を入力して申請してください。</p>
             <input type="time" id="missedTime">
             <button id="reqBtn" class="btn-send" onclick="sendApproval()">管理者へ申請</button>
         </div>
 
         <div id="warning-panel">店舗外アクセス不可</div>
-        <div id="status">名前を選択すると本日の状態が表示されます</div>
+        <div id="status"></div>
     </div>
 
-    <div class="build-info">GITHUB: v1.1.0<br>GAS: <span id="gas-build">---</span></div>
+    <div class="build-info">GITHUB: v1.1.1<br>GAS: <span id="gas-build">---</span></div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzHELuQoFwvJdCQUWMGNx38Z1V3F09q0I9rkjZoL9OJtgcYenE5ijlfdyu5fDtJFND4bw/exec";
         let userIp = "";
         let targetRow = "";
-        let currentStatus = null;
+        let lastRec = null;
 
         window.onload = function() {
             const now = new Date();
@@ -81,12 +81,14 @@
             fetch(GAS_URL + "?ip=" + userIp + "&name=" + encodeURIComponent(name))
             .then(res => res.json())
             .then(res => {
-                currentStatus = res.todayStatus;
+                lastRec = res.lastRecord;
                 warningEl.style.display = res.forgotOut ? 'block' : 'none';
-                if (currentStatus) {
-                    statusEl.innerHTML = "【本日打刻済み】<br>出勤: " + (currentStatus.in || "--:--") + " / 退勤: " + (currentStatus.out || "--:--");
+                if (lastRec) {
+                    let txt = "【直近の記録】<br>出勤: " + (lastRec.in || "--:--");
+                    if (lastRec.out) txt += " / 退勤: " + lastRec.out;
+                    statusEl.innerHTML = txt;
                 } else {
-                    statusEl.innerText = "本日の打刻はありません";
+                    statusEl.innerText = "直近の打刻はありません";
                 }
             });
         }
@@ -96,19 +98,34 @@
             if (!name) { alert("名前を選択してください"); return; }
             
             let isUpdate = false;
-            if (currentStatus) {
-                const time = (type === '出勤') ? currentStatus.in : currentStatus.out;
-                if (time) {
-                    if (!confirm(name + "さん、本日既に " + time + " に " + type + " 済みです。\n現在の時刻で更新（訂正）しますか？")) return;
-                    isUpdate = true;
+            let targetUpdateRow = null;
+
+            if (lastRec) {
+                // 出勤ボタンを押した時
+                if (type === '出勤') {
+                    if (lastRec.isIncomplete) { // まだ退勤していない場合
+                        if (!confirm(lastRec.in + " に打刻してありますが更新（上書き）しますか？")) return;
+                        isUpdate = true;
+                        targetUpdateRow = lastRec.row;
+                    }
+                    // 退勤済みの場合は、そのまま新規行作成(isUpdate=false)へ
+                } 
+                // 退勤ボタンを押した時
+                else {
+                    if (!lastRec.isIncomplete) { // 既に退勤済みの場合
+                        if (!confirm(lastRec.out + " に退勤済みですが更新（上書き）しますか？")) return;
+                        isUpdate = true;
+                        targetUpdateRow = lastRec.row;
+                    }
                 }
             }
+
             if (!isUpdate && !confirm(name + "さん、" + type + " を記録しますか？")) return;
 
             document.getElementById('status').innerText = "送信中...";
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp, update: isUpdate })
+                body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp, update: isUpdate, row: targetUpdateRow })
             })
             .then(res => res.json())
             .then(res => {
@@ -118,7 +135,7 @@
                     document.getElementById('error-panel').style.display = 'block';
                     targetRow = res.row;
                 }
-            }).catch(() => { alert("送信失敗。再度お試しください。"); });
+            }).catch(() => { alert("通信エラーが発生しました。再度お試しください。"); });
         }
 
         function sendApproval() {
