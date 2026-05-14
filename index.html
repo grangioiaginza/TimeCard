@@ -7,24 +7,18 @@
     <style>
         body { font-family: "Yu Mincho", serif; background: #1a1a1a; color: #f1d592; text-align: center; margin: 0; display: flex; justify-content: center; align-items: center; min-height: 100vh; }
         .container { border: 2px solid #f1d592; padding: 40px 30px; border-radius: 15px; max-width: 400px; width: 90%; background: rgba(0, 0, 0, 0.8); box-shadow: 0 10px 30px rgba(0,0,0,0.5); position: relative; }
-        h2 { letter-spacing: 0.2em; margin-bottom: 30px; line-height: 1.5; }
-        
+        h2 { letter-spacing: 0.2em; margin-bottom: 20px; line-height: 1.5; }
         #main-panel, #warning-panel, #error-panel { display: none; }
-        
         #error-panel { color: #ff4d4d; border: 1px solid #ff4d4d; padding: 20px; border-radius: 10px; margin-top: 20px; }
-        .error-date { font-size: 1.1em; font-weight: bold; margin-bottom: 10px; color: #fff; }
-
-        select, button, input { width: 100%; padding: 18px; margin: 12px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; outline: none; transition: 0.3s; }
+        select, button, input { width: 100%; padding: 18px; margin: 10px 0; font-size: 18px; border-radius: 8px; box-sizing: border-box; outline: none; }
         select, input { background: #333; color: #fff; border: 1px solid #f1d592; }
         .btn-in { background: #f1d592; color: #1a1a1a; font-weight: bold; border: none; cursor: pointer; }
         .btn-out { background: transparent; color: #f1d592; border: 1px solid #f1d592; cursor: pointer; }
         .btn-send { background: #ff4d4d; color: white; border: none; font-weight: bold; cursor: pointer; }
-        .btn-send:disabled { background: #666; }
-
-        .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; line-height: 1.4; font-family: monospace; }
-        #status { margin-top: 25px; font-size: 13px; color: #666; min-height: 1.5em; }
-        .loading { animation: blink 1s infinite; }
-        @keyframes blink { 50% { opacity: 0.5; } }
+        .forgot-warning { background: #851414; color: white; padding: 10px; border-radius: 5px; font-size: 0.8em; margin-bottom: 15px; display: none; }
+        #status { margin-top: 20px; font-size: 13px; color: #888; min-height: 3em; line-height: 1.6; }
+        .build-info { position: fixed; bottom: 10px; right: 15px; font-size: 10px; color: #444; text-align: right; font-family: monospace; }
+        .loading { animation: blink 1s infinite; } @keyframes blink { 50% { opacity: 0.5; } }
     </style>
 </head>
 <body>
@@ -33,7 +27,8 @@
         <div id="loading-msg" class="loading">認証中...</div>
 
         <div id="main-panel">
-            <select id="nameList">
+            <div id="forgotWarning" class="forgot-warning">⚠️ 前回、退勤の打刻忘れがありました。<br>今後は注意してください。</div>
+            <select id="nameList" onchange="checkUserStatus()">
                 <option value="">名前を選択してください</option>
                 <option value="スタッフA">スタッフA</option>
                 <option value="スタッフB">スタッフB</option>
@@ -44,110 +39,102 @@
         </div>
 
         <div id="error-panel">
-            <div id="displayDate" class="error-date"></div>
-            <p id="errorMessage" style="font-size:0.85em; color:#ccc; line-height:1.5;">
-                本日の出勤記録が見つかりません。<br>実際の出勤時刻を入力して申請してください。
-            </p>
+            <div id="displayDate" style="font-weight:bold; margin-bottom:10px;"></div>
+            <p style="font-size:0.85em; color:#ccc;">本日の出勤記録が見つかりません。<br>実際の出勤時刻を入力して申請してください。</p>
             <input type="time" id="missedTime">
             <button id="reqBtn" class="btn-send" onclick="sendApproval()">管理者へ申請</button>
         </div>
 
-        <div id="warning-panel">アクセス権限がありません</div>
-        <div id="status"></div>
+        <div id="warning-panel">店舗外アクセス不可</div>
+        <div id="status">名前を選択すると本日の状態が表示されます</div>
     </div>
 
-    <div class="build-info">
-        GITHUB: v1.0.9<br>
-        GAS: <span id="gas-build">---</span>
-    </div>
+    <div class="build-info">GITHUB: v1.1.0<br>GAS: <span id="gas-build">---</span></div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbzHELuQoFwvJdCQUWMGNx38Z1V3F09q0I9rkjZoL9OJtgcYenE5ijlfdyu5fDtJFND4bw/exec";
         let userIp = "";
         let targetRow = "";
+        let currentStatus = null;
 
         window.onload = function() {
-            // 今日の日付を表示用にセット
             const now = new Date();
-            const dateStr = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日";
-            document.getElementById('displayDate').innerText = dateStr;
-
-            fetch('https://api.ipify.org?format=json')
-            .then(res => res.json())
-            .then(data => {
+            document.getElementById('displayDate').innerText = now.getFullYear() + "年" + (now.getMonth() + 1) + "月" + now.getDate() + "日";
+            fetch('https://api.ipify.org?format=json').then(res => res.json()).then(data => {
                 userIp = data.ip;
                 return fetch(GAS_URL + "?ip=" + userIp);
-            })
-            .then(res => res.json())
-            .then(res => {
+            }).then(res => res.json()).then(res => {
                 document.getElementById('loading-msg').style.display = 'none';
-                document.getElementById('gas-build').innerText = res.build || 'Connected';
+                document.getElementById('gas-build').innerText = res.build;
                 if (res.allowed) document.getElementById('main-panel').style.display = 'block';
                 else document.getElementById('warning-panel').style.display = 'block';
-            })
-            .catch(() => {
-                document.getElementById('loading-msg').innerText = "認証エラー";
             });
         };
+
+        function checkUserStatus() {
+            const name = document.getElementById('nameList').value;
+            const statusEl = document.getElementById('status');
+            const warningEl = document.getElementById('forgotWarning');
+            if (!name) { statusEl.innerText = ""; warningEl.style.display = 'none'; return; }
+
+            statusEl.innerText = "状態確認中...";
+            fetch(GAS_URL + "?ip=" + userIp + "&name=" + encodeURIComponent(name))
+            .then(res => res.json())
+            .then(res => {
+                currentStatus = res.todayStatus;
+                warningEl.style.display = res.forgotOut ? 'block' : 'none';
+                if (currentStatus) {
+                    statusEl.innerHTML = "【本日打刻済み】<br>出勤: " + (currentStatus.in || "--:--") + " / 退勤: " + (currentStatus.out || "--:--");
+                } else {
+                    statusEl.innerText = "本日の打刻はありません";
+                }
+            });
+        }
 
         function punch(type) {
             const name = document.getElementById('nameList').value;
             if (!name) { alert("名前を選択してください"); return; }
-            if (!confirm(type + " を記録しますか？")) return;
+            
+            let isUpdate = false;
+            if (currentStatus) {
+                const time = (type === '出勤') ? currentStatus.in : currentStatus.out;
+                if (time) {
+                    if (!confirm(name + "さん、本日既に " + time + " に " + type + " 済みです。\n現在の時刻で更新（訂正）しますか？")) return;
+                    isUpdate = true;
+                }
+            }
+            if (!isUpdate && !confirm(name + "さん、" + type + " を記録しますか？")) return;
 
             document.getElementById('status').innerText = "送信中...";
             fetch(GAS_URL, {
                 method: 'POST',
-                body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp })
+                body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp, update: isUpdate })
             })
             .then(res => res.json())
             .then(res => {
-                if (res.success) {
-                    alert("完了しました。");
-                    location.reload();
-                } else if (res.errorType === 'no_punch_in') {
+                if (res.success) { alert("完了しました。"); location.reload(); }
+                else if (res.errorType === 'no_punch_in') {
                     document.getElementById('main-panel').style.display = 'none';
                     document.getElementById('error-panel').style.display = 'block';
                     targetRow = res.row;
-                    document.getElementById('status').innerText = "出勤データなし";
                 }
-            })
-            .catch(() => {
-                alert("通信が途切れましたが、送信は試行されました。スプレッドシートを確認してください。");
-            });
+            }).catch(() => { alert("送信失敗。再度お試しください。"); });
         }
 
         function sendApproval() {
             const time = document.getElementById('missedTime').value;
             const name = document.getElementById('nameList').value;
             if (!time) { alert("時刻を入力してください"); return; }
-
             const btn = document.getElementById('reqBtn');
-            btn.disabled = true;
-            btn.innerText = "申請中...";
+            btn.disabled = true; btn.innerText = "申請中...";
 
-            // fetchの代わりに、より確実にデータを送れる形式を試行
             fetch(GAS_URL, {
                 method: 'POST',
-                mode: 'no-cors', // 通信エラー（CORS）を強制回避
-                body: JSON.stringify({
-                    action: 'requestApproval',
-                    name: name,
-                    time: time,
-                    date: document.getElementById('displayDate').innerText,
-                    row: targetRow
-                })
-            })
-            .then(() => {
-                // no-corsの場合、成功したかどうかは判定できないが、
-                // 基本的にここに来ればGASにはデータが届いている
-                alert("管理者に修正依頼を送信しました。そのまま退店してください。");
+                mode: 'no-cors',
+                body: JSON.stringify({ action: 'requestApproval', name: name, time: time, date: document.getElementById('displayDate').innerText, row: targetRow })
+            }).then(() => {
+                alert("管理者に修正依頼を送信しました。\n今後、打刻忘れに注意してください。\nお疲れ様でした。");
                 location.reload();
-            })
-            .catch(() => {
-                alert("送信エラーが発生しました。");
-                btn.disabled = false;
-                btn.innerText = "管理者へ申請";
             });
         }
     </script>
