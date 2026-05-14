@@ -121,36 +121,6 @@
             </div>
             <label>口座名義（カナ）</label><input type="text" id="bankHolder" placeholder="タナカ タロウ">
 
-            <h4 style="color:#f1d592; margin:25px 0 10px;">雇用形態・税設定</h4>
-            <label>雇用形態</label>
-            <select id="empType">
-                <option value="アルバイト">アルバイト</option>
-                <option value="社員">社員</option>
-            </select>
-            
-            <div class="flex">
-                <div>
-                    <label>源泉徴収区分</label>
-                    <select id="taxType">
-                        <option value="甲">甲</option>
-                        <option value="乙">乙</option>
-                    </select>
-                </div>
-                <div>
-                    <label>扶養親族等の数</label>
-                    <select id="dependents">
-                        <option value="0">0人</option>
-                        <option value="1">1人</option>
-                        <option value="2">2人</option>
-                        <option value="3">3人</option>
-                        <option value="4">4人</option>
-                        <option value="5">5人</option>
-                        <option value="6">6人</option>
-                        <option value="7">7人</option>
-                    </select>
-                </div>
-            </div>
-
             <div class="desc-box" style="margin-top:25px;">
                 <span class="desc-highlight">
                     お手持ちの端末から運転免許証・マイナンバーカードの画像を提出いただきます。<br>
@@ -189,7 +159,7 @@
         </div>
     </div>
 
-    <div class="build-info">GITHUB: v1.2.4<br>GAS: <span id="gas-build">---</span></div>
+    <div class="build-info">GITHUB: v1.2.5<br>GAS: <span id="gas-build">---</span></div>
 
     <script>
         const GAS_URL = "https://script.google.com/macros/s/AKfycbyzOY0K5lid7GwgAhhHoK_BVWAwvJeFjS40nNUZ6TMPlyuPJF2NkvAlQhKS1w3bJvhT/exec";
@@ -257,9 +227,6 @@
                 bankType: document.getElementById('bankType').value,
                 bankNumber: document.getElementById('bankNumber').value.trim(),
                 bankHolder: document.getElementById('bankHolder').value.trim(),
-                empType: document.getElementById('empType').value, // 雇用形態の追加
-                taxType: document.getElementById('taxType').value, // 源泉徴収区分の追加
-                dependents: document.getElementById('dependents').value, // 扶養親族等の数の追加
                 em_name: document.getElementById('em_name').value.trim(),
                 em_yomi: document.getElementById('em_yomi').value.trim(),
                 em_tel: document.getElementById('em_tel').value.trim(),
