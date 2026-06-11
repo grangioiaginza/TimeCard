@@ -55,8 +55,8 @@
             <div id="punch-loading" class="loading" style="font-size: 14px; color:#666; margin: 20px 0;">ネットワーク認証中...</div>
             <div id="punch-elements">
                 <select id="nameList" onchange="checkUserStatus()"><option value="">名前を選択してください</option></select>
-                <button class="btn-in" onclick="punch('出勤')">出 勤</button>
-                <button class="btn-out" onclick="punch('退勤')">退 勤</button>
+                <button id="btn-in" class="btn-in" onclick="punch('出勤')">出 勤</button>
+　　　　　　　　　<button id="btn-out" class="btn-out" onclick="punch('退勤')">退 勤</button>
             </div>
             <div id="warning-panel">⚠️ 店舗ネットワーク外です。</div>
         </div>
@@ -267,10 +267,39 @@
             for(let i=1; i<=31; i++) d.add(new Option(i+"日", i)); d.value="15";
         }
         function checkUserStatus() {
-            const n = document.getElementById('nameList').value; if(!n) return;
+            const n = document.getElementById('nameList').value;
+            const btnIn = document.getElementById('btn-in');
+            const btnOut = document.getElementById('btn-out');
+            const s = document.getElementById('status');
+
+            // 【初期化】名前が未選択のときは、どちらのボタンも押せないようにロックする
+            if (!n) {
+                btnIn.disabled = true; btnOut.disabled = true;
+                s.innerHTML = ""; return;
+            }
+
+            s.innerHTML = "ステータス確認中...";
             fetch(GAS_URL + "?ip=" + userIp + "&name=" + encodeURIComponent(n)).then(r => r.json()).then(r => {
-                const s = document.getElementById('status');
-                if(r.lastRecord) s.innerHTML = "前回: " + (r.lastRecord.in || "--") + " 〜 " + (r.lastRecord.out || "--");
+                if (r.lastRecord) {
+                    s.innerHTML = "前回: " + (r.lastRecord.in || "--") + " 〜 " + (r.lastRecord.out || "--");
+                    
+                    if (r.lastRecord.isIncomplete) {
+                        // 💡 現在「出勤中」の場合 ➔ 退勤しか押せなくする
+                        btnIn.disabled = true;
+                        btnOut.disabled = false;
+                        s.innerHTML += "<br><b style='color:#f1d592;'>🟢 現在：出勤中（退勤ボタンを押してください）</b>";
+                    } else {
+                        // 💡 現在「退勤中」の場合 ➔ 出勤しか押せなくする
+                        btnIn.disabled = false;
+                        btnOut.disabled = true;
+                        s.innerHTML += "<br><b style='color:#888;'>⚪️ 現在：退勤中（出勤ボタンを押してください）</b>";
+                    }
+                } else {
+                    // 💡 新人さんなど、過去に一度も打刻がない場合 ➔ 出勤しか押せなくする
+                    s.innerHTML = "✨ 初回のご利用です。";
+                    btnIn.disabled = false;
+                    btnOut.disabled = true;
+                }
             });
         }
         function punch(type) {
