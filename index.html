@@ -55,8 +55,8 @@
             <div id="punch-loading" class="loading" style="font-size: 14px; color:#666; margin: 20px 0;">ネットワーク認証中...</div>
             <div id="punch-elements">
                 <select id="nameList" onchange="checkUserStatus()"><option value="">名前を選択してください</option></select>
-                <button id="btn-in" class="btn-in" onclick="punch('出勤')">出 勤</button>
-　　　　　　　　　<button id="btn-out" class="btn-out" onclick="punch('退勤')">退 勤</button>
+                <button id="btn-in" class="btn-in" onclick="punch('出勤')" disabled>出 勤</button>
+                <button id="btn-out" class="btn-out" onclick="punch('退勤')" disabled>退 勤</button>
             </div>
             <div id="warning-panel">⚠️ 店舗ネットワーク外です。</div>
         </div>
@@ -177,7 +177,17 @@
                 document.getElementById('gas-build').innerText = res.build;
                 const nameSelect = document.getElementById('nameList');
                 nameSelect.innerHTML = '<option value="">名前を選択してください</option>';
-                res.staffList.forEach(n => nameSelect.add(new Option(n, n)));
+                
+                // ──────────────────────────────────────────
+                // 💡 【アップデート】芸名表示対応ロジック
+                // ──────────────────────────────────────────
+                res.staffList.forEach(staff => {
+                    // 芸名（stageName）がある時だけ「本名（芸名）」の表示形式にします
+                    const displayLabel = staff.stageName ? `${staff.name}（${staff.stageName}）` : staff.name;
+                    nameSelect.add(new Option(displayLabel, staff.name)); // 送信値(value)は本名のまま保持
+                });
+                // ──────────────────────────────────────────
+                
                 if (res.allowed) document.getElementById('punch-elements').style.display = 'block';
                 else document.getElementById('warning-panel').style.display = 'block';
             });
