@@ -178,15 +178,16 @@
                 const nameSelect = document.getElementById('nameList');
                 nameSelect.innerHTML = '<option value="">名前を選択してください</option>';
                 
-                // ──────────────────────────────────────────
-                // 💡 【アップデート】芸名表示対応ロジック
-                // ──────────────────────────────────────────
                 res.staffList.forEach(staff => {
-                    // 芸名（stageName）がある時だけ「本名（芸名）」の表示形式にします
-                    const displayLabel = staff.stageName ? `${staff.name}（${staff.stageName}）` : staff.name;
-                    nameSelect.add(new Option(displayLabel, staff.name)); // 送信値(value)は本名のまま保持
+                    // 🛡️ 保険：万が一データ構造がズレても名前が消えないためのフォールバック
+                    const sName = typeof staff === 'object' ? staff.name : staff;
+                    const sStage = typeof staff === 'object' ? staff.stageName : "";
+                    
+                    // 💡【ご要望】芸名（マジシャン名）がある場合は「芸名のみ」、ない場合は「本名」を出す
+                    const displayLabel = sStage ? sStage : sName;
+                    
+                    nameSelect.add(new Option(displayLabel, sName)); // 裏の送信値は本名なので給与連携は完璧です
                 });
-                // ──────────────────────────────────────────
                 
                 if (res.allowed) document.getElementById('punch-elements').style.display = 'block';
                 else document.getElementById('warning-panel').style.display = 'block';
