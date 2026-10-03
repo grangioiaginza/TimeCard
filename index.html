@@ -314,9 +314,46 @@
             });
         }
         function punch(type) {
-            const name = document.getElementById('nameList').value; if(!name) return;
+            const name = document.getElementById('nameList').value; 
+            if(!name) return;
+
+            // ★連打防止バリア：ボタンを即座に無効化し、テキストを変更する
+            const btnIn = document.getElementById('btn-in');
+            const btnOut = document.getElementById('btn-out');
+            
+            // 両方のボタンをカチカチに固めて押せなくする
+            btnIn.disabled = true;
+            btnOut.disabled = true;
+
+            // 押した方のボタンに「通信中」と表示して安心させる
+            if (type === "出勤") {
+                btnIn.innerText = "出勤 打刻中...";
+            } else {
+                btnOut.innerText = "退勤 打刻中...";
+            }
+
+            // 通信処理スタート
             fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'punch', name: name, type: type, ip: userIp }) })
-            .then(r => r.json()).then(r => { if(r.success) { alert("完了しました。"); location.reload(); } });
+            .then(r => r.json()).then(r => { 
+                if(r.success) { 
+                    alert("完了しました。"); 
+                    location.reload(); 
+                } else {
+                    // 万が一失敗した場合は、もう一度押せるようにロックを解除する
+                    alert("打刻に失敗しました。もう一度お試しください。");
+                    btnIn.disabled = false;
+                    btnOut.disabled = false;
+                    btnIn.innerText = "出 勤";
+                    btnOut.innerText = "退 勤";
+                }
+            }).catch(() => {
+                // 電波が悪くて通信エラーになった場合もロックを解除する
+                alert("通信エラーが発生しました。");
+                btnIn.disabled = false;
+                btnOut.disabled = false;
+                btnIn.innerText = "出 勤";
+                btnOut.innerText = "退 勤";
+            });
         }
     </script>
 </body>
